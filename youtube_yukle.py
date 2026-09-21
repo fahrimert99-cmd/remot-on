@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+YouTube Yükleyici — YouTube Data API v3 (ücretsiz günlük kota)
+Refresh token ile kimlik doğrular (bir kere token_al.py ile alınır).
+Gerekli GitHub Secret / env: YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN
+"""
+import os
+import time
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+
+def _kapak_bas(yt, vid, kapak, deneme=1):
+    """Kapağı basar; başarısızsa `deneme` kadar tekrar. True/False."""
+    for i in range(max(1, deneme)):
+        try:
+            yt.thumbnails().set(videoId=vid, media_body=MediaFileUpload(kapak)).execute()
+            return True
+        except Exception as e:
+            print(f"  ! kapak deneme {i+1} olmadı: {str(e)[:100]}")
+            time.sleep(4)
+    return False
+
+
+def _islem_bekle(yt, vid, azami_sn=240):
+    """Video YouTube tarafında İŞLENENE kadar bekler (azami azami_sn). İşlenme
+    bitmeden basılan kapağı YouTube'un otomatik thumbnail'ı EZEBİLİYOR; bu yüzden
+    kapağı işlenme sonrası bir kez daha basmak için beklenir. Zaman aşımı/hata ->
+    False (yine de son bir deneme yapılır)."""
+    son = time.time() + azami_sn
+    while time.time() < son:
+        try:
+            r = yt.videos().list(part="processingDetails,status", id=vid).execute()
+            items = r.get("items") or []
+            if items:
+                pd = (items[0].get("processingDetails") or {}).get("processingStatus")
+                us = (items[0].get("status") or {}).get("uploadStatus")
+                if pd in ("succeeded", "terminated") or us == "processed":
+                    return True
+        except Exception:
+            pass
+        time.sleep(20)
+    return False
+
+TOKEN_URI = "https://oauth2.googleapis.com/token"
+
+def _kimlik():
+    return Credentials(
+        token=None,
+        refresh_token=os.environ["YT_REFRESH_TOKEN"],
+        token_uri=TOKEN_URI,
+        client_id=os.environ["YT_CLIENT_ID"],
+        client_secret=os.environ["YT_CLIENT_SECRET"],
+        # NOT: refresh token'a GERÇEKTE hangi izinlerin verildiği token'ın
+        # kendisinde saklıdır; buradaki liste bildirimseldir. Analytics
+        # (retention/CTR) izni token_al.py ile verildiğinde burada da yazılı
+        # olsun ki niyet kodda görünsün ve istemci doğru kurulsun.
+        scopes=["https://www.googleapis.com/auth/youtube.force-ssl",
+                "https://www.googleapis.com/auth/yt-analytics.readonly"],
+    )
+
+
+def planli_video_bul(baslik, yayin_zamani, pencere=50):
+    """Aynı başlık ve publishAt slotu daha önce yüklenmiş mi kontrol eder.
+
+    Workflow, YouTube yüklemesinden sonra GitHub durum kaydını yazamadan kesilirse
+    yeniden çalışabilir. Bu kontrol aynı videonun ikinci kez yüklenmesini önler.
+    Yalnızca başlık + kesin yayın zamanı eşleşirse sonuç döndürür; bu yüzden aynı
+    başlıklı farklı gün videoları birbirine karıştırılmaz.
+    """
+    if not baslik or not yayin_zamani:
+        return None
+    try:
+        yt = build("youtube", "v3", credentials=_kimlik())
+        ch = yt.channels().list(part="contentDetails", mine=True).execute()
+        items = ch.get("items") or []
+        if not items:
+            return None
+        uploads = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        tok = None
+        kalan = max(1, int(pencere))
+        while kalan > 0:
+            batch = min(50, kalan)
+            r = yt.playlistItems().list(
+                part="contentDetails", playlistId=uploads,
+                maxResults=batch, pageToken=tok).execute()
+            ids = [x.get("contentDetails", {}).get("videoId")
+                   for x in r.get("items", [])]
+            ids = [x for x in ids if x]
+            if ids:
+                vr = yt.videos().list(part="snippet,status", id=",".join(ids)).execute()
+                for item in vr.get("items", []):
+                    sn = item.get("snippet", {})
+                    st = item.get("status", {})
+                    if (sn.get("title") == baslik[:100]
+                            and st.get("publishAt") == yayin_zamani):
+                        return item["id"]
+            kalan -= len(ids)
+            tok = r.get("nextPageToken")
+            if not tok or not ids:
+                break
+    except Exception as e:
+        # Kontrol başarısızsa güvenli tarafta kal: üretim akışını durdurma.
+        print(f"! Çift yükleme kontrolü yapılamadı: {str(e)[:140]}")
+    return None
+
+
+def planli_slot_video(yayin_zamani, pencere=50):
+    """Belirli UTC publishAt slotundaki ilk video ID'sini döndürür."""
+    if not yayin_zamani:
+        return None
+    try:
+        yt = build("youtube", "v3", credentials=_kimlik())
+        ch = yt.channels().list(part="contentDetails", mine=True).execute()
+        items = ch.get("items") or []
+        if not items:
+            return False
+        uploads = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        r = yt.playlistItems().list(part="contentDetails", playlistId=uploads,
+                                    maxResults=min(50, max(1, int(pencere)))).execute()
+        ids = [x.get("contentDetails", {}).get("videoId") for x in r.get("items", [])]
+        ids = [x for x in ids if x]
+        if not ids:
+            return None
+        vr = yt.videos().list(part="status", id=",".join(ids)).execute()
+        for item in vr.get("items", []):
+            if item.get("status", {}).get("publishAt") == yayin_zamani:
+                return item.get("id")
+    except Exception as e:
+        print(f"! Yayın slotu kontrolü yapılamadı: {str(e)[:140]}")
+    return None
+
+
+def planli_slot_var(yayin_zamani, pencere=50):
+    """Belirli UTC publishAt slotunda en az bir video var mı?"""
+    return bool(planli_slot_video(yayin_zamani, pencere=pencere))
+
+def _durum_bloku(gizlilik, cocuk_icerigi, yayin_zamani, sentetik=True):
+    st = {"selfDeclaredMadeForKids": bool(cocuk_icerigi)}
+    # AI/SENTETİK İÇERİK BEYANI (YouTube "Altered or Synthetic Content"):
+    # AI ses + fotogerçekçi AI görseller kullandığımız için beyan ediyoruz
+    # (containsSyntheticMedia; Data API v3, 30 Ekim 2024'ten beri destekli).
+    st["containsSyntheticMedia"] = bool(sentetik)
+    if yayin_zamani:
+        # zamanlanmis yayin: video 'private' yuklenir, publishAt'ta otomatik public olur
+        st["privacyStatus"] = "private"
+        st["publishAt"] = yayin_zamani
+    else:
+        st["privacyStatus"] = gizlilik
+    return st
+
+
+def yukle(dosya, baslik, aciklama, etiketler, gizlilik="private", kategori="27", cocuk_icerigi=False, kapak=None, yayin_zamani=None, sentetik=True):
+    """
+    gizlilik: 'public' | 'unlisted' | 'public'
+    kategori: 27=Eğitim, 24=Eğlence, 28=Bilim&Teknoloji, 22=İnsanlar&Bloglar
+    sentetik: AI/sentetik içerik beyanı (YouTube). AI ses+görsel kullandığımız
+              için varsayılan True; config.ai_beyani=false ile kapatılabilir.
+    """
+    yt = build("youtube", "v3", credentials=_kimlik())
+    # SINIR KORUMASI: etiketler None/boş/tekil string gelse bile YouTube'a
+    # her zaman temiz bir liste git (tags=None API'yi kırabilir).
+    if isinstance(etiketler, str):
+        etiketler = [etiketler]
+    temiz_etiket = [str(t).strip() for t in (etiketler or [])
+                    if t is not None and str(t).strip()]
+    body = {
+        "snippet": {
+            "title": baslik[:100],
+            "description": aciklama,
+            "tags": temiz_etiket,
+            "categoryId": kategori,
+        },
+        "status": _durum_bloku(gizlilik, cocuk_icerigi, yayin_zamani, sentetik),
+    }
+    media = MediaFileUpload(dosya, chunksize=-1, resumable=True, mimetype="video/mp4")
+    istek = yt.videos().insert(part="snippet,status", body=body, media_body=media)
+    yanit = None
+    while yanit is None:
+        _, yanit = istek.next_chunk()
+    vid = yanit["id"]
+    print(f"✓ Yüklendi: https://youtu.be/{vid}" + (f"  (yayın: {yayin_zamani} UTC)" if yayin_zamani else f"  (gizlilik: {gizlilik})"))
+    # Çarpıcı kapak fotoğrafını yükle (kanal doğrulanmamışsa atlanır, video kaybolmaz).
+    # ÖNEMLİ: kapağı İKİ kez basıyoruz — (1) hemen, (2) YouTube işlemeyi bitirince.
+    # Sebep: işlenme sırasında YouTube kendi otomatik karesini üretip erken basılan
+    # kapağı EZİYOR (Shorts'ta kapağın ızgarada görünmeme sebebi buydu). İşlenme
+    # sonrası yeniden basınca tasarım kapağımız kalıcı olur. KAPAK_RESET=0 kapatır.
+    if kapak and os.path.exists(kapak):
+        if _kapak_bas(yt, vid, kapak):
+            print("✓ Kapak fotoğrafı ayarlandı (ilk)")
+        else:
+            print("! Kapak ilk denemede ayarlanamadı (kanal doğrulanmamış olabilir)")
+        if (os.environ.get("KAPAK_RESET", "1") or "1").strip() != "0":
+            if _islem_bekle(yt, vid):
+                if _kapak_bas(yt, vid, kapak, deneme=2):
+                    print("✓ Kapak işleme sonrası YENİDEN basıldı (otomatik kareyi ezmesin diye)")
+            else:
+                # işlenme onayı gelmese de son bir deneme (bekleme boşa gitmesin)
+                if _kapak_bas(yt, vid, kapak, deneme=2):
+                    print("✓ Kapak (işlenme onayı yok) yine de yeniden basıldı")
+    return vid
+
+
+def video_public(video_id):
+    """Video herkese acik (public) mi kontrol eder.
+    Zamanlanmis (private + publishAt) video yayin saatine kadar 'private'
+    doner; bu videoya yorum atmak 403 verir. Yorumu ancak public olunca at.
+    API hatasi / bulunamama durumunda guvenli tarafta kal: False don (ertele).
+    """
+    try:
+        yt = build("youtube", "v3", credentials=_kimlik())
+        r = yt.videos().list(part="status", id=video_id).execute()
+        items = r.get("items", [])
+        if not items:
+            return False
+        return items[0].get("status", {}).get("privacyStatus") == "public"
+    except Exception:
+        return False
+
+
+def sil(video_id):
+    """Videoyu kanaldan tamamen siler (geri alinamaz).
+    Yeniden uretimde eski (yedek sesli) surumu kaldirmak icin kullanilir."""
+    yt = build("youtube", "v3", credentials=_kimlik())
+    yt.videos().delete(id=video_id).execute()
+    print(f"✓ Eski video silindi: {video_id}")
+
+
+def _oynatma_listesi_bul_veya_olustur(yt, ad, aciklama=""):
+    """Verilen adda oynatma listesi varsa id'sini döner, yoksa oluşturur (public)."""
+    tok = None
+    while True:
+        r = yt.playlists().list(part="snippet", mine=True, maxResults=50, pageToken=tok).execute()
+        for it in r.get("items", []):
+            if it["snippet"]["title"] == ad:
+                return it["id"]
+        tok = r.get("nextPageToken")
+        if not tok:
+            break
+    r = yt.playlists().insert(part="snippet,status", body={
+        "snippet": {"title": ad, "description": aciklama},
+        "status": {"privacyStatus": "public"}}).execute()
+    return r["id"]
+
+
+def oynatma_listesine_ekle(video_id, liste_adi, liste_aciklama=""):
+    """Videoyu adı verilen oynatma listesine ekler (liste yoksa oluşturur).
+    İzlenme süresi/oturum uzunluğu için: kategoriye göre grupla."""
+    yt = build("youtube", "v3", credentials=_kimlik())
+    pid = _oynatma_listesi_bul_veya_olustur(yt, liste_adi, liste_aciklama)
+    yt.playlistItems().insert(part="snippet", body={
+        "snippet": {"playlistId": pid,
+                    "resourceId": {"kind": "youtube#video", "videoId": video_id}}}).execute()
+    return pid
+
+
+def yorum_at(video_id, metin):
+    """Kendi public videosuna yorumu güvenli ve idempotent biçimde gönderir."""
+    from yorum_at import gonder
+    return gonder(video_id, metin)

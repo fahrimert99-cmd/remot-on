@@ -1,0 +1,57 @@
+{
+  "format": "dikey",
+  "ses": "erkek",
+  "tonlama": "+0Hz",
+  "gizlilik": "public",
+  "kategori": "28",
+  "cocuk_icerigi": false,
+  "animasyon": true,
+  "hiz": "+6%",
+  "yayin_saati_utc": "",
+  "yayin_saatleri_utc": [
+    "09:00",
+    "17:00"
+  ],
+  "gorsel_stil": "stok",
+  "kisa_ses_id": "pqHfZKP75CvOlQylNhV4",
+  "kisa_eleven": true,
+  "uzun_eleven": true,
+  "uzun_gizlilik": "private",
+  "uzun_gorsel_stil": "stok",
+  "uzun_aktif": false,
+  "marka_ad": "TUZAK AVCISI",
+  "marka_renk": [
+    255,
+    195,
+    30
+  ],
+  "marka_logo": "assets/marka/avatar.png",
+  "marka_konum": "ust",
+  "marka_slogan": "Her gün yeni bir tüketici tuzağı",
+  "marka_handle": "@tuzakavcisitv",
+  "oynatma_listesi": true,
+  "marka_ilk_kare": false,
+  "marka_ilk_kare_sn": 1.5,
+  "haber_gizlilik": "public",
+  "ai_kapak": true,
+  "ai_sahne": true,
+  "ai_beyani": true,
+  "arka_muzik": true,
+  "arka_muzik_ses": 0.24,
+  "arka_muzik_kaynaklar": {
+    "genel": [
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Asking%20Questions.mp3",
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Hidden%20Truth.mp3",
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Desert%20Fox%20Underscore.mp3",
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Cornfield%20Chase.mp3"
+    ],
+    "merak": [
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Attic%20Secrets.mp3",
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Mysterious%20Lights.mp3"
+    ],
+    "haber": [
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Hidden%20Truth.mp3",
+      "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Deep%20Tones.mp3"
+    ]
+  }
+}
