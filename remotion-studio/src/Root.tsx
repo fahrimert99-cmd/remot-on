@@ -3,7 +3,7 @@ import { HelloWorld } from "./HelloWorld";
 import { Showcase, SHOWCASE_DURATION } from "./Showcase";
 import { Realistic, REAL_DURATION } from "./Realistic";
 import { PixarScene } from "./Pixar";
-import { ElifTrailer, ELIF_LEN } from "./Elif";
+import { ElifFrame, ElifTrailer, ELIF_LEN } from "./Elif";
 import { PIXAR_LEN } from "./Pixar/anim";
 import { City } from "./Realistic/City";
 import { DAWN, Landscape, SUNSET } from "./Realistic/Landscape";
@@ -15,6 +15,7 @@ import { Title } from "./HelloWorld/Title";
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition id="ElifKare" component={ElifFrame} durationInFrames={1} fps={30} width={1920} height={1080} defaultProps={{ shot: "wide" as const }} />
       <Composition id="Elif" component={ElifTrailer} durationInFrames={ELIF_LEN} fps={30} width={1920} height={1080} />
       <Composition id="Pitir" component={PixarScene} durationInFrames={PIXAR_LEN} fps={30} width={1920} height={1080} />
       <Composition id="Gercekci" component={Realistic} durationInFrames={REAL_DURATION} fps={30} width={1920} height={1080} />

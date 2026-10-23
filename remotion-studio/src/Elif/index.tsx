@@ -316,3 +316,22 @@ export const ElifTrailer: React.FC = () => {
     </AbsoluteFill>
   );
 };
+
+// Görselden video (i2v) modelleri için yazısız başlangıç kareleri
+export const ElifFrame: React.FC<{ shot: "wide" | "close" }> = ({ shot }) =>
+  shot === "wide" ? (
+    <AbsoluteFill>
+      <Landscape cam={{ x: 120, y: 30, zoom: 1.25, blur: 3 }} sunRise={1} />
+      <Foreground cam={{ x: 120, y: 30, zoom: 1.25, blur: 3 }} />
+      <div style={{ position: "absolute", inset: 0, transform: "translate(-120px, -30px) scale(1.25)", transformOrigin: "50% 75%" }}>
+        <ElifFull pose="q34" x={760} ground={965} h={420} />
+      </div>
+      <Grade />
+    </AbsoluteFill>
+  ) : (
+    <AbsoluteFill>
+      <Landscape cam={{ x: 260, y: -120, zoom: 1.6, blur: 16 }} sunRise={1} />
+      <ElifBust x={960} h={880} seq={[{ at: 0, pose: "curious" }]} />
+      <Grade />
+    </AbsoluteFill>
+  );
