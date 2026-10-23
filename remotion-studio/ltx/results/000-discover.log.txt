@@ -1,5 +1,1 @@
-Traceback (most recent call last):
-  File "/home/runner/work/remot-on/remot-on/remotion-studio/ltx/run_jobs.py", line 68, in main
-    clients[space] = Client(space, hf_token=token, verbose=False)
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TypeError: Client.__init__() got an unexpected keyword argument 'hf_token'
+API şeması kaydedildi.
