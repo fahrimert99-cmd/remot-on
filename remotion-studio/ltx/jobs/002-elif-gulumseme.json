@@ -6,7 +6,7 @@
     },
     "prompt": "Pixar-style 3D animation, close-up. The girl's curious sideways glance turns into wide-eyed wonder as she looks up, then a big joyful gap-toothed smile spreads across her face and she laughs softly, her curly pigtails gently bouncing in the breeze. Balloons float softly in the blurred background. Slow push-in, warm golden backlight. Sound: light breeze, a happy child's soft laugh, gentle music.",
     "negative_prompt": "captions, subtitles, text, watermark, bad quality, blurry face, deformed hands, extra fingers, distorted eyes, morphing, flicker",
-    "seconds": 4.0,
+    "seconds": 3.0,
     "identity_ref_image": {
       "file": "remotion-studio/public/elif/i2v/identity.jpg"
     },
@@ -16,6 +16,9 @@
     "prompt_segments": "",
     "scene_chain_prompt": "",
     "profile_name": "",
-    "user_loras_text": ""
+    "user_loras_text": "",
+    "target_mp": 0.4,
+    "skip_refine": true,
+    "gen_budget": 110
   }
 }

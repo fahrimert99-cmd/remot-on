@@ -6,7 +6,7 @@
     },
     "prompt": "Pixar-style 3D animation. The little curly-haired girl turns her head to look up at the colorful hot-air balloons rising over the fairy chimneys. Her eyes widen, she gasps and breaks into a huge gap-toothed smile, then bounces happily on her toes and points at the sky while her curly pigtails bounce. The balloons drift slowly upward, gentle camera push-in. Warm sunrise light. Sound: soft morning wind, distant whoosh of balloon burners, a delighted child's gasp and giggle.",
     "negative_prompt": "captions, subtitles, text, watermark, bad quality, blurry face, deformed hands, extra fingers, distorted eyes, morphing, flicker",
-    "seconds": 4.0,
+    "seconds": 3.0,
     "identity_ref_image": {
       "file": "remotion-studio/public/elif/i2v/identity.jpg"
     },
@@ -16,6 +16,9 @@
     "prompt_segments": "",
     "scene_chain_prompt": "",
     "profile_name": "",
-    "user_loras_text": ""
+    "user_loras_text": "",
+    "target_mp": 0.4,
+    "skip_refine": true,
+    "gen_budget": 110
   }
 }
