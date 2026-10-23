@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/runner/work/remot-on/remot-on/remotion-studio/ltx/run_jobs.py", line 75, in main
+    result = client.predict(
+             ^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/gradio_client/client.py", line 604, in predict
+    return self.submit(
+           ^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/gradio_client/client.py", line 655, in submit
+    args = utils.construct_args(endpoint.parameters_info, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/gradio_client/utils.py", line 1414, in construct_args
+    raise TypeError(
+TypeError: No value provided for required argument: face_bbox
