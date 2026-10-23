@@ -11,6 +11,11 @@
       "file": "remotion-studio/public/elif/i2v/identity.jpg"
     },
     "seed": 42,
-    "randomize_seed": false
+    "randomize_seed": false,
+    "face_bbox": "",
+    "prompt_segments": "",
+    "scene_chain_prompt": "",
+    "profile_name": "",
+    "user_loras_text": ""
   }
 }
