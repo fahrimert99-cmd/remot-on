@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Ignore the output video from Git but not videos you import into src/.
+out
+
+# Üst klasördeki medya kurallarını bu proje için geri aç
+!*.png
+!*.jpg
+!*.wav
+!videolar/*.mp4
+!ltx/results/**

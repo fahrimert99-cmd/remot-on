@@ -1,0 +1,48 @@
+name: LTX Space köprüsü
+
+# remotion-studio/ltx/jobs/ altına iş dosyası gönderildiğinde Hugging Face Space'i çağırır
+# ve sonuçları aynı dala geri kaydeder. Elle de çalıştırılabilir.
+on:
+  push:
+    paths:
+      - "remotion-studio/ltx/jobs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ltx-space-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: gradio_client kur
+        run: pip install "gradio_client>=1.3"
+
+      - name: İşleri çalıştır
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python remotion-studio/ltx/run_jobs.py
+
+      - name: Sonuçları kaydet
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f remotion-studio/ltx/results
+          if git diff --cached --quiet; then
+            echo "Yeni sonuç yok."
+            exit 0
+          fi
+          git commit -m "LTX sonuçları: ${{ github.run_id }}"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
