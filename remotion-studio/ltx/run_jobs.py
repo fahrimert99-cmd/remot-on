@@ -65,7 +65,7 @@ def main():
         print(f"== {name} ({space})", flush=True)
         try:
             if space not in clients:
-                clients[space] = Client(space, hf_token=token, verbose=False)
+                clients[space] = Client(space, token=token, verbose=False)
             client = clients[space]
             if job.get("type") == "discover":
                 api = client.view_api(return_format="dict", print_info=False)
