@@ -21,4 +21,4 @@ Traceback (most recent call last):
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/gradio_client/client.py", line 1356, in _predict
     raise AppError(message=message, **result)
-gradio_client.exceptions.AppError: The requested GPU duration (270s) is larger than the maximum allowedSubscribe to Hugging Face PRO to allow GPU tasks up to 40 min - https://huggingface.co/subscribe/pro?from=ZeroGPU
+gradio_client.exceptions.AppError: You have exceeded your ZeroGPU quota (165s requested vs. 134s left). Try again in 23:59:11. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
